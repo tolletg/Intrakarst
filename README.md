@@ -3,16 +3,14 @@
 Consolidation des chroniques des stations hydrometriques du systeme karstique de
 l'Ouysse. Un notebook par station.
 
-Tous suivent la meme logique : une colonne par sonde, une sonde choisie
-automatiquement a chaque pas dans l'ordre `ORDRE`, des periodes imposees a la main
-quand le graphe montre que ce choix n'est pas le bon, un recalage mesure a chaque
-changement de sonde, puis calage sur les points de controle, filtre IQR, interpolation
-des lacunes de moins de 12 h et statut par grandeur.
+Tous les traitements suivent la même logique de construction des séries temporelles. Chaque sonde est représentée par une colonne. Lorsqu'un même paramètre est mesuré par plusieurs sondes, une sonde est sélectionnée automatiquement selon un ordre de priorité défini par l'utilisateur. Il est également possible d'imposer manuellement une sonde comme prioritaire sur une période donnée.
+
+À chaque changement de sonde, un recalage est effectué par rapport à la sonde précédente afin d'assurer la continuité de la série, puis un ajustement est réalisé à partir des points de contrôle. Les données sont ensuite traitées avec un filtre IQR pour éliminer les valeurs aberrantes, les lacunes de moins de 12 heures sont interpolées, et un statut de qualité est attribué pour chaque grandeur.
 
 ## La librairie `ouysse`
 
-Les fonctions communes aux cinq stations (lecture des exports bruts, corrections, 
-choix de sonde et fusion, filtre IQR, interpolation, graphes) sont dans le
+Elle regroupe les fonctions communes aux stations (lecture des exports bruts, corrections, 
+choix de sonde et fusion, filtre IQR, interpolation, graphes), les fonctions sont dans le
 package `ouysse`. Les notebook portent les chemins, les corrections, 
 les courbes de tarage, la cote NGF, propres à chaque station.
 
