@@ -22,14 +22,3 @@ le dossier `ouysse/` doit être à la racine du dépôt (à coté du notebook) e
 Le code d'une fonction se lit avec :
 
     import inspect; print(inspect.getsource(fusionner))
-
-## Outils
-
-    python3 tests/generer_stations.py                       # regenere les cinq notebooks
-    python3 tests/test_ouysse.py                            # tests unitaires de la librairie
-    python3 tests/jeu_de_test_cabouy.py <notebook> <dossier>
-    python3 tests/jeu_de_test_stations.py --toutes <dossier>
-    python3 tests/comparer_notebooks.py <ancien> <nouveau> <dossier>
-
-`tests/stations.py` porte les chemins, les priorites et les corrections propres a
-chaque station ; `tests/generer_stations.py` en fabrique les notebooks.
