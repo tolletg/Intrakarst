@@ -1,7 +1,7 @@
 # Intrakarst
 
 Consolidation des chroniques des stations hydrometriques du systeme karstique de
-l'Ouysse (Causses du Quercy). Un notebook par station.
+l'Ouysse. Un notebook par station.
 
 Tous suivent la meme logique : une colonne par sonde, une sonde choisie
 automatiquement a chaque pas dans l'ordre `ORDRE`, des periodes imposees a la main
