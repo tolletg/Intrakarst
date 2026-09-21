@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ouysse-hydro"
+version = "0.1.0"
+description = "Consolidation des chroniques des stations hydrometriques de l'Ouysse"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["numpy", "pandas", "matplotlib", "plotly", "openpyxl"]
+
+[tool.setuptools]
+packages = ["ouysse"]
