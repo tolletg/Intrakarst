@@ -1,11 +1,12 @@
-"""Jeu de test synthetique pour le notebook de Combettes (une seule sonde CTD).
+"""Jeu de test synthetique des stations a une seule sonde CTD.
 
 Fabrique des exports Diver avec leurs pieges (en-tete a ligne variable, pied
 END OF DATA, virgules decimales, mS/cm, cp1252, campagnes qui se recouvrent),
-un ancien consolide separe par un trou, puis execute le notebook et verifie
-que la chronique est continue et complete.
+un ancien consolide separe par un trou, puis execute le notebook de la station
+et verifie que la chronique est continue et complete.
 
-    python3 tests/jeu_de_test_combettes.py "Code pour consolider les données-Combettes.ipynb" /tmp/jdt
+    python3 tests/jeu_de_test_ctd.py                # toutes les stations
+    python3 tests/jeu_de_test_ctd.py Goudou /tmp/jdt
 """
 import json
 import sys
@@ -15,6 +16,9 @@ import matplotlib
 matplotlib.use("Agg")
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).parent))
+from stations_ctd import STATIONS, BARO_COL
 
 DEBUT = pd.Timestamp("2019-01-01")
 FIN = pd.Timestamp("2026-04-30 23:00")
@@ -42,8 +46,7 @@ def _fr(x, nd=3):
     return "" if pd.isna(x) else f"{x:.{nd}f}".replace(".", ",")
 
 
-def ecrire_ctd(chemin, debut, fin, fuseau, en_ms, encodage):
-    decalage = {"UTC+1": 1, "UTC+2": 2}[fuseau]
+def ecrire_ctd(chemin, debut, fin, decalage, en_ms, encodage):
     sous = VERITE.loc[debut:fin]
     dates = sous.index + pd.Timedelta(hours=decalage)
     unite, facteur = ("mS/cm", 0.001) if en_ms else ("µS/cm", 1.0)
@@ -57,31 +60,34 @@ def ecrire_ctd(chemin, debut, fin, fuseau, en_ms, encodage):
     Path(chemin).write_text("\n".join(lignes), encoding=encodage)
 
 
-def fabriquer(base):
+def fabriquer(base, st):
+    """Sans table UTC, les exports sont ecrits deja en UTC : le notebook ne
+    convertit pas, la chronique doit quand meme tomber sur la verite."""
     base = Path(base)
     (base / "Données brutes").mkdir(parents=True, exist_ok=True)
-    (base / "Données consolidées").mkdir(parents=True, exist_ok=True)
+    (base / "sorties").mkdir(parents=True, exist_ok=True)
 
     sous = VERITE.loc[PERIODE_ANCIEN[0]:PERIODE_ANCIEN[1]]
     pd.DataFrame({
-        "Date/time": sous.index,
+        st["col_date_old"]: sous.index,
         "Niveau_(cm)": sous["niveau"].to_numpy(),
         "Cond_(µS/cm)": sous["cond"].to_numpy(),
         "Temp_(°C)": sous["temp"].to_numpy(),
-    }).to_excel(base / "Données consolidées" / "Combettes_Old.xlsx", index=False)
+    }).to_excel(base / "old.xlsx", index=False)
 
     noms, fuseaux = [], []
     for i, (d, f, fuseau) in enumerate(CAMPAGNES, start=1):
-        nom = f"Combettes_{i}_diver.csv"
-        ecrire_ctd(base / "Données brutes" / nom, d, f, fuseau,
+        nom = f"{st['prefixe']}_{i}_diver.csv"
+        decalage = {"UTC+1": 1, "UTC+2": 2}[fuseau] if st["utc"] else 0
+        ecrire_ctd(base / "Données brutes" / nom, d, f, decalage,
                    en_ms=(i == 2), encodage="cp1252" if i == 3 else "utf-8")
         noms.append(nom)
         fuseaux.append(fuseau)
-    pd.DataFrame({"Nom fichier": noms, "UTC fichier": fuseaux}).to_excel(
-        base / "UTC_CTD.xlsx", index=False)
+    if st["utc"]:
+        pd.DataFrame({"Nom fichier": noms, "UTC fichier": fuseaux}).to_excel(
+            base / "UTC_CTD.xlsx", index=False)
 
-    pd.DataFrame({"DATE": VERITE.index,
-                  "Patm Thémines [hPa]": VERITE["baro"].to_numpy()}
+    pd.DataFrame({"DATE": VERITE.index, BARO_COL: VERITE["baro"].to_numpy()}
                  ).to_excel(base / "baro.xlsx", index=False)
 
     pluie = pd.DataFrame({"Date": pd.date_range(DEBUT, FIN, freq="1D")})
@@ -89,31 +95,31 @@ def fabriquer(base):
     pluie.to_csv(base / "Pluie_BV_Ouysse.csv", index=False)
 
 
-def cellule_chemins(base):
+def cellule_chemins(base, st):
+    utc = ('UTC_CTD_PATH = os.path.join(BASE, "UTC_CTD.xlsx")\nCOL_UTC = "UTC fichier"\n'
+           if st["utc"] else "")
     return f'''
 import os
 BASE = {str(base)!r}
 CTD_PATH    = os.path.join(BASE, "Données brutes")
 BARO_PATH   = os.path.join(BASE, "baro.xlsx")
 PLUIE_PATH  = os.path.join(BASE, "Pluie_BV_Ouysse.csv")
-OLDDATA_PATH     = os.path.join(BASE, "Données consolidées", "Combettes_Old.xlsx")
-UTC_CTD_PATH     = os.path.join(BASE, "UTC_CTD.xlsx")
-SORTIE_CONSOLIDE = os.path.join(BASE, "Données consolidées", "Combettes_consolide.xlsx")
-SORTIE_FINALE    = os.path.join(BASE, "Données consolidées", "Combettes_final.xlsx")
-SORTIE_SVG       = os.path.join(BASE, "Données consolidées", "Graphes.svg")
-PREFIXE_CTD = "Combettes"
-BARO_COL    = "Patm Thémines [hPa]"
-COL_UTC     = "UTC fichier"
+OLDDATA_PATH     = os.path.join(BASE, "old.xlsx")
+{utc}SORTIE_CONSOLIDE = os.path.join(BASE, "sorties", "consolide.xlsx")
+SORTIE_FINALE    = os.path.join(BASE, "sorties", "final.xlsx")
+SORTIE_SVG       = os.path.join(BASE, "sorties", "Graphes.svg")
+PREFIXE_CTD = {st["prefixe"]!r}
+BARO_COL    = {BARO_COL!r}
 PAS         = "1h"
 PARAMETRES = ["Niveau_(cm)", "Conductivité", "Température"]
 '''
 
 
-def executer(notebook, base):
+def executer(notebook, base, st):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     nb = json.loads(Path(notebook).read_text(encoding="utf-8"))
     code = ["".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code"]
-    code[1] = cellule_chemins(base)          # la 2e cellule de code porte les chemins
+    code[1] = cellule_chemins(base, st)       # la 2e cellule de code porte les chemins
     espace = {"__name__": "__notebook__", "display": lambda *a, **k: None}
     for i, src in enumerate(code, start=1):
         try:
@@ -121,7 +127,6 @@ def executer(notebook, base):
         except Exception:
             print(f"\n=== ECHEC cellule de code {i} ===\n{src}")
             raise
-    print(f"{len(code)} cellules de code executees sans erreur.")
     return espace
 
 
@@ -164,17 +169,28 @@ def verifier(espace, base):
               f"{full[col].notna().mean():.1%}")
 
     check("statuts ecrits", all(f"Statut_{c}" in full for c in espace["PARAMETRES"]))
-    check("fichier final ecrit",
-          (Path(base) / "Données consolidées" / "Combettes_final.xlsx").exists())
+    check("fichier final ecrit", (Path(base) / "sorties" / "final.xlsx").exists())
     return ok
 
 
+def tester(nom, base):
+    st = STATIONS[nom]
+    print(f"\n=== {nom}")
+    base = Path(base)
+    base.mkdir(parents=True, exist_ok=True)
+    fabriquer(base, st)
+    espace = executer(Path(__file__).resolve().parent.parent / st["fichier"], base, st)
+    return verifier(espace, base)
+
+
 if __name__ == "__main__":
-    notebook = (sys.argv[1] if len(sys.argv) > 1
-                else "Code pour consolider les données-Combettes.ipynb")
-    base = Path(sys.argv[2] if len(sys.argv) > 2 else "jeu_de_test_combettes")
-    print(f"Jeu de test dans {base}\n")
-    fabriquer(base)
-    espace = executer(notebook, base)
-    print("\nVerifications :")
-    sys.exit(0 if verifier(espace, base) else 1)
+    if len(sys.argv) > 1:
+        sys.exit(0 if tester(sys.argv[1], sys.argv[2] if len(sys.argv) > 2
+                             else f"jeu_de_test_{sys.argv[1]}") else 1)
+    import tempfile
+    tous = True
+    with tempfile.TemporaryDirectory() as tmp:
+        for nom in STATIONS:
+            tous = tester(nom, Path(tmp) / nom) and tous
+    print("\nTOUTES LES STATIONS OK" if tous else "\nECHEC")
+    sys.exit(0 if tous else 1)
