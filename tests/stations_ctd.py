@@ -51,6 +51,17 @@ STATIONS = {
         #: la sonde rend des valeurs basses hors d'eau : plancher a 300 µS/cm
         "gammes": '{**GAMMES, "cond": (300, 5000)}',
     },
+    "Théminettes": {
+        "fichier": "Code pour consolider les données-Theminettes.ipynb",
+        "base": RACINE + r"\Théminettes\Gaetan",
+        "prefixe": "Théminettes",
+        "sorties": "",
+        #: pas d'ancienne chronique : le notebook d'origine n'en raccordait aucune.
+        "old": None,
+        "utc": True,
+        #: planchers du notebook d'origine : sonde hors d'eau ou voie muette.
+        "gammes": '{**GAMMES, "cond": (50, 5000), "niveau": (15, 1000)}',
+    },
     "Zobépine": {
         "fichier": "Code pour consolider les données-Zobepine.ipynb",
         "base": RACINE + r"\Zobépine\Gaetan",

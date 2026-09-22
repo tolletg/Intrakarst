@@ -46,14 +46,14 @@ def _fr(x, nd=3):
     return "" if pd.isna(x) else f"{x:.{nd}f}".replace(".", ",")
 
 
-def ecrire_ctd(chemin, debut, fin, decalage, en_ms, encodage):
+def ecrire_ctd(chemin, debut, fin, decalage, en_ms, encodage, offset=OFFSET_CTD_BRUT):
     sous = VERITE.loc[debut:fin]
     dates = sous.index + pd.Timedelta(hours=decalage)
     unite, facteur = ("mS/cm", 0.001) if en_ms else ("µS/cm", 1.0)
     lignes = ["Data file for DataLogger.", "=" * 30]
     lignes += [f"Ligne de preambule {i}" for i in range(RNG.integers(20, 60))] + ["[Data]"]
     lignes.append(f"Date/time;Pression[cmH2O];Température[°C];2:Cond. spéc.[{unite}]")
-    pression = sous["niveau"].to_numpy() + OFFSET_CTD_BRUT + sous["baro"].to_numpy() * 1.019716
+    pression = sous["niveau"].to_numpy() + offset + sous["baro"].to_numpy() * 1.019716
     for d, p, tt, c in zip(dates, pression, sous["temp"], sous["cond"] * facteur):
         lignes.append(f"{d:%Y/%m/%d %H:%M:%S};{_fr(p)};{_fr(tt)};{_fr(c, 5 if en_ms else 2)}")
     lignes.append("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
@@ -87,8 +87,10 @@ def fabriquer(base, st):
     for i, (d, f, fuseau) in enumerate(CAMPAGNES, start=1):
         nom = f"{st['prefixe']}_{i}_diver.csv"
         decalage = {"UTC+1": 1, "UTC+2": 2}[fuseau] if st["utc"] else 0
+        #: sans ancienne chronique, rien ne recale la sonde : elle lit juste.
         ecrire_ctd(base / "Données brutes" / nom, d, f, decalage,
-                   en_ms=(i == 2), encodage="cp1252" if i == 3 else "utf-8")
+                   en_ms=(i == 2), encodage="cp1252" if i == 3 else "utf-8",
+                   offset=OFFSET_CTD_BRUT if st["old"] else 0.0)
         noms.append(nom)
         fuseaux.append(fuseau)
     if st["utc"]:
