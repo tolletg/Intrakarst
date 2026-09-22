@@ -160,6 +160,10 @@ __POINTS__
 for grandeur, chemin, col in POINTS:
     points = lire_points(chemin)
     print(f"{grandeur} :")
+    if col not in points.columns:      # sinon ni calage ni points tracés, en silence
+        print(f"  colonne {col!r} absente de {os.path.basename(chemin)}\\n"
+              f"  colonnes lues : {list(points.columns)}")
+        continue
     avant = full_data[grandeur]
     full_data[grandeur] = caler(avant, points, col)
     graphe([(avant, "avant calage", "darkorange"),
