@@ -37,7 +37,7 @@ ENTETE = '''
 # __NOM__ - consolidation des chroniques
 
 Une seule sonde : **CTD** (Diver autonome : niveau, conductivité, température).
-Pas de choix de sonde, pas de fusion, pas de points de contrôle.
+Pas de choix de sonde, pas de fusion.__POINTS_NOTE__
 
 Les fonctions communes sont dans la librairie `ouysse`. Ce notebook ne garde que
 ce qui est propre à la station : chemins, mesures écartées, réglages du filtre.
@@ -150,6 +150,23 @@ print("Voies écartées :")
 full_data = ecarter(full_data, VOIES_ECARTEES)
 '''
 
+CALAGE = '''
+#: (grandeur, fichier, colonne lue dans le fichier) : points de contrôle terrain.
+#: La colonne `Correction` du fichier décide : seuls les "Oui" sont appliqués.
+POINTS = [
+__POINTS__
+]
+
+for grandeur, chemin, col in POINTS:
+    points = lire_points(chemin)
+    print(f"{grandeur} :")
+    avant = full_data[grandeur]
+    full_data[grandeur] = caler(avant, points, col)
+    graphe([(avant, "avant calage", "darkorange"),
+            (full_data[grandeur], "calée", "black")],
+           titre=grandeur, ylab=grandeur, points=points, col_point=col)
+'''
+
 IQR = '''
 FENETRE_IQR, K_IQR = "24h", 0.1   # k = 0 : pas de filtre
 LISSAGE_H = 6                     # 0 = pas de lissage ; sinon médiane glissante, en heures
@@ -220,7 +237,9 @@ def construire(nom, st):
     old_path = ('OLDDATA_PATH     = os.path.join(BASE, r"%s")\n' % st["old"]
                 if st["old"] else "")
     cellules = [
-        md(remplir(ENTETE, NOM=nom)),
+        md(remplir(ENTETE, NOM=nom, POINTS_NOTE=(
+            " Les points de contrôle terrain recalent la chronique."
+            if st["punctual"] else " Pas de points de contrôle."))),
         md(titre("Imports")), code(IMPORTS),
         md(titre("Chemins d'accès")),
         code(remplir(CHEMINS, BASE=st["base"], BARO=BARO, PLUIE=PLUIE, OLD_PATH=old_path,
@@ -244,6 +263,12 @@ def construire(nom, st):
            "`VOIES_ECARTEES` met des mesures à l'écart. Il n'y a pas de sonde de secours ici :\n"
            "la lacune reste, et l'interpolation ne comblera pas plus de 12 h."),
         code(CORRECTIONS),
+        *([md(titre("Calage sur les points de contrôle") + "\n\n"
+              "Le décalage mesuré à chaque point est appliqué vers l'aval, en cascade.\n"
+              "Un point à plus d'une heure de toute mesure est ignoré, avec un message."),
+           code(remplir(CALAGE, POINTS="\n".join(
+               '    ("%s", os.path.join(BASE, r"%s"), "%s"),' % e for e in st["punctual"])))]
+          if st["punctual"] else []),
         md(titre("Filtre IQR et lissage")), code(IQR),
         md(titre("Cote NGF, interpolation et statuts") + "\n\n"
            "Les lacunes de moins de 12 h sont comblées. `Statut_<grandeur>` dit si la valeur\n"

@@ -100,6 +100,14 @@ def fabriquer(base, st):
     pd.DataFrame({"DATE": VERITE.index, BARO_COL: VERITE["baro"].to_numpy()}
                  ).to_excel(base / "baro.xlsx", index=False)
 
+    #: un point applique, un refuse (Correction = Non), un hors chronique.
+    d = pd.Timestamp("2024-06-12 10:00")
+    for grandeur, fichier, col in st["punctual"]:
+        v = float(VERITE.loc[d, "cond" if "Cond" in grandeur else "niveau"])
+        pd.DataFrame({"Jour": ["12/06/2024 10:00", "03/04/2026 10:00", "01/01/2010 10:00"],
+                      col: [v + 12.0, v, v],
+                      "Correction": ["Oui", "Non", "Oui"]}).to_excel(base / fichier, index=False)
+
     pluie = pd.DataFrame({"Date": pd.date_range(DEBUT, FIN, freq="1D")})
     pluie["Precipitation (mm)"] = np.clip(RNG.gamma(0.6, 4, len(pluie)) - 1, 0, None)
     pluie.to_csv(base / "Pluie_BV_Ouysse.csv", index=False)
@@ -181,6 +189,14 @@ def verifier(espace, base, st):
     for col in espace["PARAMETRES"]:
         check(f"{col} renseigne", full[col].notna().mean() > 0.9,
               f"{full[col].notna().mean():.1%}")
+
+    # Le point marque Oui est applique, celui marque Non ne l'est pas.
+    for grandeur, _, _ in st["punctual"]:
+        d = pd.Timestamp("2024-06-12 10:00")
+        cible = float(VERITE.loc[d, "cond" if "Cond" in grandeur else "niveau"]) + 12.0
+        ecart = abs(float(full.loc[d, grandeur]) - cible)
+        check(f"{grandeur} calee sur le point de controle", ecart < 15.0,
+              f"{full.loc[d, grandeur]:.1f} attendu ~{cible:.1f}")
 
     check("statuts ecrits", all(f"Statut_{c}" in full for c in espace["PARAMETRES"]))
     check("fichier final ecrit", (Path(base) / "sorties" / "final.xlsx").exists())

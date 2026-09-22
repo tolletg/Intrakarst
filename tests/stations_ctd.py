@@ -19,6 +19,7 @@ STATIONS = {
         "sorties": r"Données consolidées",
         "old": r"Données consolidées\Combettes_Old.xlsx",
         "utc": True,
+        "punctual": [],
         "gammes": None,
     },
     "Plana_Lac": {
@@ -28,6 +29,7 @@ STATIONS = {
         "sorties": r"données consolidées",
         "old": r"données consolidées\Plana_Old.xlsx",
         "utc": True,
+        "punctual": [],
         "gammes": None,
     },
     "Plana_Riviere": {
@@ -37,6 +39,7 @@ STATIONS = {
         "sorties": r"données consolidées",
         "old": r"données consolidées\PlanaRiv_Old.xlsx",
         "utc": False,          # pas de table UTC : les horodatages restent tels quels
+        "punctual": [],
         "gammes": None,
     },
     "Goudou": {
@@ -48,6 +51,7 @@ STATIONS = {
         #: Renseigner le chemin ici pour raccorder, apres avoir verifie ses en-tetes.
         "old": None,
         "utc": True,
+        "punctual": [],
         #: la sonde rend des valeurs basses hors d'eau : plancher a 300 µS/cm
         "gammes": '{**GAMMES, "cond": (300, 5000)}',
     },
@@ -59,6 +63,11 @@ STATIONS = {
         #: pas d'ancienne chronique : le notebook d'origine n'en raccordait aucune.
         "old": None,
         "utc": True,
+        #: (grandeur, fichier sous BASE, colonne lue) : verifier ces noms.
+        "punctual": [
+            ("Conductivité", "punctual_measurements_conducti.xlsx", "Conductivité"),
+            ("Niveau_(cm)", "punctual_measurements.xlsx", "Hauteur (cm)"),
+        ],
         #: planchers du notebook d'origine : sonde hors d'eau ou voie muette.
         "gammes": '{**GAMMES, "cond": (50, 5000), "niveau": (15, 1000)}',
     },
@@ -69,6 +78,7 @@ STATIONS = {
         "sorties": r"Données consolidées",
         "old": r"Données consolidées\Zobépine_Old.xlsx",
         "utc": False,          # pas de table UTC : les horodatages restent tels quels
+        "punctual": [],
         "gammes": None,
     },
 }
