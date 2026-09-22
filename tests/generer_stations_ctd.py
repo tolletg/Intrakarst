@@ -63,8 +63,7 @@ CTD_PATH    = os.path.join(BASE, r"Données brutes")
 BARO_PATH   = r"__BARO__"
 PLUIE_PATH  = r"__PLUIE__"
 
-OLDDATA_PATH     = os.path.join(BASE, r"__OLD__")
-__UTC_PATH__SORTIE_CONSOLIDE = os.path.join(BASE, r"__SORTIES____NOM___consolide.xlsx")
+__OLD_PATH____UTC_PATH__SORTIE_CONSOLIDE = os.path.join(BASE, r"__SORTIES____NOM___consolide.xlsx")
 SORTIE_FINALE    = os.path.join(BASE, r"__SORTIES____NOM___final.xlsx")
 SORTIE_SVG       = os.path.join(BASE, r"__SORTIES__Graphes.svg")
 
@@ -133,7 +132,7 @@ merge_ctd_df = raccorder_campagnes(olddata_df, merge_ctd_df, [
 '''
 
 ASSEMBLAGE = '''
-full_data = sur_grille([empiler([olddata_df, merge_ctd_df], PARAMETRES)], PAS)
+full_data = sur_grille([empiler(__PILES__, PARAMETRES)], PAS)
 
 print("Hors gamme physique :")
 full_data = appliquer_gammes(full_data__GAMMES__)
@@ -212,35 +211,45 @@ def construire(nom, st):
                     "Pour corriger, ajouter `UTC_CTD.xlsx` et passer `utc` à True dans\n"
                     "`tests/stations_ctd.py`.")
 
+    n = [0]
+
+    def titre(t):
+        n[0] += 1
+        return "## %d. %s" % (n[0], t)
+
+    old_path = ('OLDDATA_PATH     = os.path.join(BASE, r"%s")\n' % st["old"]
+                if st["old"] else "")
     cellules = [
         md(remplir(ENTETE, NOM=nom)),
-        md("## 1. Imports"), code(IMPORTS),
-        md("## 2. Chemins d'accès"),
-        code(remplir(CHEMINS, BASE=st["base"], BARO=BARO, PLUIE=PLUIE, OLD=st["old"],
+        md(titre("Imports")), code(IMPORTS),
+        md(titre("Chemins d'accès")),
+        code(remplir(CHEMINS, BASE=st["base"], BARO=BARO, PLUIE=PLUIE, OLD_PATH=old_path,
                      SORTIES=sorties, NOM=nom, PREFIXE=st["prefixe"], BARO_COL=BARO_COL,
                      UTC_PATH=utc_path, COL_UTC=col_utc)),
-        md("## 3. CTD : lecture, UTC et compensation barométrique\n\n"
+        md(titre("CTD : lecture, UTC et compensation barométrique") + "\n\n"
            "`lire_CTD` encaisse les pièges du format Diver (en-tête à une ligne variable, pied\n"
            "`END OF DATA`, virgules décimales, mS/cm ou µS/cm)." + note_utc),
         code(remplir(CTD, LIRE_META=lire_meta, LECTURE=lecture, TRACE=trace)),
-        md("## 4. Raccordement à l'ancienne chronique\n\n"
-           "L'ancien fichier consolidé et les campagnes récentes sont la **même sonde CTD**,\n"
-           "séparées par un trou d'exploitation : le décalage est mesuré à la jonction et\n"
-           "appliqué aux campagnes, pour que la chronique soit continue."),
-        code(RACCORD),
-        md("## 5. Assemblage sur la grille horaire"),
+        *([md(titre("Raccordement à l'ancienne chronique") + "\n\n"
+              "L'ancien fichier consolidé et les campagnes récentes sont la **même sonde CTD**,\n"
+              "séparées par un trou d'exploitation : le décalage est mesuré à la jonction et\n"
+              "appliqué aux campagnes, pour que la chronique soit continue."),
+           code(RACCORD)] if st["old"] else []),
+        md(titre("Assemblage sur la grille horaire") + ("" if st["old"] else
+           "\n\nPas d'ancienne chronique à raccorder pour cette station.")),
         code(remplir(ASSEMBLAGE,
+                     PILES="[olddata_df, merge_ctd_df]" if st["old"] else "[merge_ctd_df]",
                      GAMMES=", " + st["gammes"] if st["gammes"] else "")),
-        md("## 6. Corrections capteur\n\n"
+        md(titre("Corrections capteur") + "\n\n"
            "`VOIES_ECARTEES` met des mesures à l'écart. Il n'y a pas de sonde de secours ici :\n"
            "la lacune reste, et l'interpolation ne comblera pas plus de 12 h."),
         code(CORRECTIONS),
-        md("## 7. Filtre IQR et lissage"), code(IQR),
-        md("## 8. Cote NGF, interpolation et statuts\n\n"
+        md(titre("Filtre IQR et lissage")), code(IQR),
+        md(titre("Cote NGF, interpolation et statuts") + "\n\n"
            "Les lacunes de moins de 12 h sont comblées. `Statut_<grandeur>` dit si la valeur\n"
            "est mesurée, interpolée ou manquante."),
         code(STATUTS),
-        md("## 9. Sauvegarde et graphe de synthèse"), code(SAUVEGARDE),
+        md(titre("Sauvegarde et graphe de synthèse")), code(SAUVEGARDE),
         code("graphe_statuts(full_data, finaux)"),
     ]
     return {"cells": cellules,

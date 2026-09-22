@@ -44,7 +44,9 @@ STATIONS = {
         "base": RACINE + r"\Goudou\Gaetan",
         "prefixe": "Goudou",
         "sorties": "",
-        "old": r"Goudou brutes\GOUDOU_Old.xlsx",
+        #: pas de raccordement : le notebook d'origine n'ouvrait pas GOUDOU_Old.xlsx.
+        #: Renseigner le chemin ici pour raccorder, apres avoir verifie ses en-tetes.
+        "old": None,
         "utc": True,
         #: la sonde rend des valeurs basses hors d'eau : plancher a 300 µS/cm
         "gammes": '{**GAMMES, "cond": (300, 5000)}',

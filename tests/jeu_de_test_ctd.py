@@ -138,7 +138,7 @@ def executer(notebook, base, st):
     return espace
 
 
-def verifier(espace, base):
+def verifier(espace, base, st):
     ok = True
 
     def check(nom, condition, detail=""):
@@ -161,10 +161,14 @@ def verifier(espace, base):
     check("compensation baro en cmH2O", resid.std() < 1.5, f"ecart-type {resid.std():.3f} cm")
 
     # Le raccordement doit supprimer la marche a la reprise.
-    avant = full.loc[TROU - pd.Timedelta(hours=3):TROU - pd.Timedelta(hours=1), "Niveau_(cm)"]
-    apres = full.loc[TROU:TROU + pd.Timedelta(hours=2), "Niveau_(cm)"]
-    saut = abs(float(apres.mean() - avant.mean())) if avant.notna().any() else 0.0
-    check("pas de marche a la reprise apres le trou", saut < 5.0, f"saut {saut:.2f} cm")
+    if st["old"]:
+        avant = full.loc[TROU - pd.Timedelta(hours=3):TROU - pd.Timedelta(hours=1), "Niveau_(cm)"]
+        apres = full.loc[TROU:TROU + pd.Timedelta(hours=2), "Niveau_(cm)"]
+        saut = abs(float(apres.mean() - avant.mean())) if avant.notna().any() else 0.0
+        check("pas de marche a la reprise apres le trou", saut < 5.0, f"saut {saut:.2f} cm")
+    else:
+        check("chronique limitee aux campagnes, sans ancien consolide",
+              full.index.min() >= TROU, f"debute le {full.index.min():%d/%m/%Y}")
 
     # mS/cm de la 2e campagne converti en µS/cm.
     d = pd.Timestamp("2022-06-01 12:00")
@@ -188,7 +192,7 @@ def tester(nom, base):
     base.mkdir(parents=True, exist_ok=True)
     fabriquer(base, st)
     espace = executer(Path(__file__).resolve().parent.parent / st["fichier"], base, st)
-    return verifier(espace, base)
+    return verifier(espace, base, st)
 
 
 if __name__ == "__main__":
