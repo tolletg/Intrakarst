@@ -97,9 +97,13 @@ print(f"\\n{len(morceaux)} campagne(s), {len(merge_ctd_df)} enregistrements.")
 '''
 
 RACCORD = '''
-#: L'ancien consolidé n'emploie pas les noms de colonnes du notebook.
+#: Les anciens consolidés n'ont pas tous les mêmes en-têtes : les clés absentes
+#: sont ignorées, ce dictionnaire couvre les deux conventions rencontrées.
 RENOMMAGE_OLD = {
-    "__COL_DATE_OLD__": "DATE",
+    "Date/time": "DATE",
+    "NIVEAU": "Niveau_(cm)",
+    "CONDUCTIVITE": "Conductivité",
+    "TEMPERATURE CTD": "Température",
     "Cond_(µS/cm)": "Conductivité",
     "Temp_(°C)": "Température",
 }
@@ -108,9 +112,17 @@ olddata_df = pd.read_excel(OLDDATA_PATH).rename(columns=RENOMMAGE_OLD)
 olddata_df["DATE"] = pd.to_datetime(olddata_df["DATE"], errors="coerce")
 olddata_df = olddata_df.dropna(subset=["DATE"]).sort_values("DATE")
 
+manquantes = [c for c in PARAMETRES if c not in olddata_df]
+if manquantes:
+    print(f"Absentes de l'ancien consolidé : {manquantes}\\n"
+          f"  colonnes lues : {list(olddata_df.columns)}\\n"
+          f"  compléter RENOMMAGE_OLD si l'une d'elles porte un autre nom")
+
 merge_ctd_df = raccorder_campagnes(olddata_df, merge_ctd_df, [
-    ("Niveau", "Niveau_(cm)", "Niveau_(cm)", "cm"),
-    ("Conductivité", "Conductivité", "Conductivité", "µS/cm")])
+    (nom, col, col, unite)
+    for nom, col, unite in [("Niveau", "Niveau_(cm)", "cm"),
+                            ("Conductivité", "Conductivité", "µS/cm")]
+    if col in olddata_df])
 '''
 
 ASSEMBLAGE = '''
@@ -208,7 +220,7 @@ def construire(nom, st):
            "L'ancien fichier consolidé et les campagnes récentes sont la **même sonde CTD**,\n"
            "séparées par un trou d'exploitation : le décalage est mesuré à la jonction et\n"
            "appliqué aux campagnes, pour que la chronique soit continue."),
-        code(remplir(RACCORD, COL_DATE_OLD=st["col_date_old"])),
+        code(RACCORD),
         md("## 5. Assemblage sur la grille horaire"),
         code(remplir(ASSEMBLAGE,
                      GAMMES=", " + st["gammes"] if st["gammes"] else "")),

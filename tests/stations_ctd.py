@@ -18,7 +18,6 @@ STATIONS = {
         "prefixe": "Combettes",
         "sorties": r"Données consolidées",
         "old": r"Données consolidées\Combettes_Old.xlsx",
-        "col_date_old": "Date/time",
         "utc": True,
         "gammes": None,
     },
@@ -28,7 +27,6 @@ STATIONS = {
         "prefixe": "Lac Plana",
         "sorties": r"données consolidées",
         "old": r"données consolidées\Plana_Old.xlsx",
-        "col_date_old": "Date/time",
         "utc": True,
         "gammes": None,
     },
@@ -38,7 +36,6 @@ STATIONS = {
         "prefixe": "Plana_Riviere",
         "sorties": r"données consolidées",
         "old": r"données consolidées\PlanaRiv_Old.xlsx",
-        "col_date_old": "DATE",
         "utc": False,          # pas de table UTC : les horodatages restent tels quels
         "gammes": None,
     },
@@ -48,7 +45,6 @@ STATIONS = {
         "prefixe": "Goudou",
         "sorties": "",
         "old": r"Goudou brutes\GOUDOU_Old.xlsx",
-        "col_date_old": "Date/time",
         "utc": True,
         #: la sonde rend des valeurs basses hors d'eau : plancher a 300 µS/cm
         "gammes": '{**GAMMES, "cond": (300, 5000)}',
@@ -59,7 +55,6 @@ STATIONS = {
         "prefixe": "Zobépine",
         "sorties": r"Données consolidées",
         "old": r"Données consolidées\Zobépine_Old.xlsx",
-        "col_date_old": "DATE",
         "utc": False,          # pas de table UTC : les horodatages restent tels quels
         "gammes": None,
     },

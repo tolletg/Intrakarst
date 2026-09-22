@@ -67,13 +67,19 @@ def fabriquer(base, st):
     (base / "Données brutes").mkdir(parents=True, exist_ok=True)
     (base / "sorties").mkdir(parents=True, exist_ok=True)
 
+    #: Les deux conventions d'en-tetes rencontrees dans les anciens consolides.
     sous = VERITE.loc[PERIODE_ANCIEN[0]:PERIODE_ANCIEN[1]]
-    pd.DataFrame({
-        st["col_date_old"]: sous.index,
-        "Niveau_(cm)": sous["niveau"].to_numpy(),
-        "Cond_(µS/cm)": sous["cond"].to_numpy(),
-        "Temp_(°C)": sous["temp"].to_numpy(),
-    }).to_excel(base / "old.xlsx", index=False)
+    if st["utc"]:
+        ancien = {"Date/time": sous.index, "Niveau_(cm)": sous["niveau"].to_numpy(),
+                  "Cond_(µS/cm)": sous["cond"].to_numpy(),
+                  "Temp_(°C)": sous["temp"].to_numpy()}
+    else:
+        ancien = {"DATE": sous.index, "PRESSION CTD": np.nan,
+                  "TEMPERATURE CTD": sous["temp"].to_numpy(),
+                  "CONDUCTIVITE": sous["cond"].to_numpy(),
+                  "NIVEAU": sous["niveau"].to_numpy(), "SALINITE": np.nan,
+                  "Unnamed: 6": np.nan}
+    pd.DataFrame(ancien).to_excel(base / "old.xlsx", index=False)
 
     noms, fuseaux = [], []
     for i, (d, f, fuseau) in enumerate(CAMPAGNES, start=1):
