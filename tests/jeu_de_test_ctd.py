@@ -70,8 +70,10 @@ def fabriquer(base, st):
     #: Les deux conventions d'en-tetes rencontrees dans les anciens consolides.
     sous = VERITE.loc[PERIODE_ANCIEN[0]:PERIODE_ANCIEN[1]]
     if st["utc"]:
+        #: mu grec (U+03BC), identique a l'oeil au micro (U+00B5) du notebook :
+        #: sans normalisation NFKC le renommage echoue en silence.
         ancien = {"Date/time": sous.index, "Niveau_(cm)": sous["niveau"].to_numpy(),
-                  "Cond_(µS/cm)": sous["cond"].to_numpy(),
+                  "Cond_(μS/cm)": sous["cond"].to_numpy(),
                   "Temp_(°C)": sous["temp"].to_numpy()}
     else:
         ancien = {"DATE": sous.index, "PRESSION CTD": np.nan,

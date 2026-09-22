@@ -45,6 +45,7 @@ ce qui est propre à la station : chemins, mesures écartées, réglages du filt
 
 IMPORTS = '''
 import os
+import unicodedata
 
 import numpy as np
 import pandas as pd
@@ -108,7 +109,13 @@ RENOMMAGE_OLD = {
     "Temp_(°C)": "Température",
 }
 
-olddata_df = pd.read_excel(OLDDATA_PATH).rename(columns=RENOMMAGE_OLD)
+#: µ (U+00B5) et μ (U+03BC) sont identiques a l'oeil : sans normalisation NFKC,
+#: le renommage echoue en silence sur la conductivite.
+norme = lambda c: unicodedata.normalize("NFKC", str(c)).strip()
+
+olddata_df = pd.read_excel(OLDDATA_PATH)
+olddata_df.columns = [norme(c) for c in olddata_df.columns]
+olddata_df = olddata_df.rename(columns={norme(k): v for k, v in RENOMMAGE_OLD.items()})
 olddata_df["DATE"] = pd.to_datetime(olddata_df["DATE"], errors="coerce")
 olddata_df = olddata_df.dropna(subset=["DATE"]).sort_values("DATE")
 
