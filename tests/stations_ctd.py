@@ -66,7 +66,7 @@ STATIONS = {
         #: (grandeur, fichier sous BASE, colonne lue) : verifier ces noms.
         "punctual": [
             ("Conductivité", "punctual_measurements_conducti.xlsx", "Conductivité"),
-            ("Niveau_(cm)", "punctual_measurements.xlsx", "Hauteur (cm)"),
+            ("Niveau_(cm)", "punctual_measurements_niveau.xlsx", "Hauteur (cm)"),
         ],
         #: planchers du notebook d'origine : sonde hors d'eau ou voie muette.
         "gammes": '{**GAMMES, "cond": (50, 5000), "niveau": (15, 1000)}',
