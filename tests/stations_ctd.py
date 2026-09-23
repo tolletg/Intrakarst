@@ -55,6 +55,16 @@ STATIONS = {
         #: la sonde rend des valeurs basses hors d'eau : plancher a 300 µS/cm
         "gammes": '{**GAMMES, "cond": (300, 5000)}',
     },
+    "Méduse": {
+        "fichier": "Code pour consolider les données-Meduse.ipynb",
+        "base": RACINE + r"\Méduse\Gaetan",
+        "prefixe": "Méduse",
+        "sorties": r"Données consolidées",
+        "old": r"Données consolidées\Méduse_Old.xlsx",
+        "utc": True,
+        "punctual": [],
+        "gammes": None,
+    },
     "Théminettes": {
         "fichier": "Code pour consolider les données-Theminettes.ipynb",
         "base": RACINE + r"\Théminettes\Gaetan",
